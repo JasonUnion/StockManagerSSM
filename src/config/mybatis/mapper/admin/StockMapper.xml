@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ischoolbar.programmer.dao.admin.StockDao">
+	<resultMap id="stockResultMap" type="com.ischoolbar.programmer.entity.admin.Stock">
+		<id column="s_id" property="id" />
+		<result column="s_productId" property="productId" />
+		<result column="s_productNum" property="productNum" />
+		<result column="s_sellNum" property="sellNum" />
+		<result column="s_createTime" property="createTime" />
+		<association property="product" javaType="com.ischoolbar.programmer.entity.admin.Product">
+			<id column="p_id" property="id" />
+			<result column="p_orderInId" property="orderInId" />
+			<result column="p_supplierId" property="supplierId" />
+			<result column="p_name" property="name" />
+			<result column="p_place" property="place" />
+			<result column="p_spec" property="spec" />
+			<result column="p_pk" property="pk" />
+			<result column="p_unit" property="unit" />
+			<result column="p_price" property="price" />
+			<result column="p_remark" property="remark" />
+		</association>
+	</resultMap>
+	
+	<!-- 商品库存插入操作 -->
+	<insert id="add" parameterType="com.ischoolbar.programmer.entity.admin.Stock">
+		insert into stock(id,productId,productNum,sellNum,createTime) values(null,#{productId},#{productNum},#{sellNum},#{createTime})
+	</insert>
+	<!-- 商品库存编辑操作 -->
+	<update id="edit" parameterType="com.ischoolbar.programmer.entity.admin.Stock">
+		update stock set productNum = #{productNum},sellNum = #{sellNum} where id = #{id}
+	</update>
+	<!-- 商品库存信息搜索查询 -->
+	<select id="findByProductId" parameterType="Long" resultType="com.ischoolbar.programmer.entity.admin.Stock">
+		select * from stock where productId = #{value}
+	</select>
+	<!-- 商品库存信息搜索查询 -->
+	<select id="findList" parameterType="Map" resultMap="stockResultMap">
+		select  
+		 s.id as s_id,s.productId as s_productId,s.productNum as s_productNum,s.sellNum as s_sellNum,s.createTime as s_createTime,
+		 p.id as p_id,p.supplierId as p_supplierId,p.name as p_name,p.place as p_place,p.spec as p_spec,p.pk as p_pk,p.unit as p_unit,p.price as p_price,p.remark as p_remark 
+		from stock s,product p where s.productId = p.id  
+		<if test="productName != null">
+			and p.name like '%${productName}%'  
+		</if>
+		<if test="supplierId != null">
+			and p.supplierId = #{supplierId}  
+		</if>
+		<if test="productNum != null">
+			and s.productNum &gt; #{productNum}  
+		</if>
+		<if test="offset != null and pageSize != null">
+			limit #{offset},#{pageSize}
+		</if>
+	</select>
+	<!-- 模糊搜索总条数 -->
+	<select id="getTotal" parameterType="Map" resultType="Integer">
+		select count(*) from stock where 1=1  
+		<if test="productIds != null">
+			and productId in (${productIds})  
+		</if>
+		<if test="productNum != null">
+			and productNum &gt; #{productNum}  
+		</if>
+	</select>
+	<!-- 删除商品库存信息 -->
+	<delete id="delete" parameterType="Long">
+		delete from stock where id = #{value}
+	</delete>
+</mapper>

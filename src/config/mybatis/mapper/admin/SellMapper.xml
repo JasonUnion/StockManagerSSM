@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ischoolbar.programmer.dao.admin.SellDao">
+	<resultMap id="sellResultMap" type="com.ischoolbar.programmer.entity.admin.Sell">
+		<id column="o_id" property="id" />
+		<result column="o_money" property="money" />
+		<result column="o_productNum" property="productNum" />
+		<result column="o_payType" property="payType" />
+		<result column="o_status" property="status" />
+		<result column="o_operator" property="operator" />
+		<result column="o_remark" property="remark" />
+		<result column="o_createTime" property="createTime" />
+		<collection property="sellDetailList" ofType="com.ischoolbar.programmer.entity.admin.SellDetail">
+			<id column="od_id" property="id" />
+			<result column="od_sellId" property="sellId" />
+			<result column="od_productName" property="productName" />
+			<result column="od_price" property="price" />
+			<result column="od_productNum" property="productNum" />
+			<result column="od_money" property="money" />
+		</collection>
+	</resultMap>
+	
+	<!-- 销售单插入操作 -->
+	<insert id="add" useGeneratedKeys="true" keyProperty="id" parameterType="com.ischoolbar.programmer.entity.admin.Sell">
+		insert into sell(id,money,productNum,payType,status,operator,remark,createTime) values(null,#{money},#{productNum},#{payType},#{status},#{operator},#{remark},#{createTime})
+	</insert>
+	<!-- 销售单子项添加操作 -->
+	<insert id="addDetail" parameterType="com.ischoolbar.programmer.entity.admin.SellDetail">
+		insert into sell_detail(id,sellId,productName,price,productNum,money) values(null,#{sellId},#{productName},#{price},#{productNum},#{money})
+	</insert>
+	<!-- 销售单编辑操作 -->
+	<update id="edit" parameterType="com.ischoolbar.programmer.entity.admin.Sell">
+		update sell set status = #{status} where id = #{id}
+	</update>
+	<!-- 销售单信息搜索查询 -->
+	<select id="findList" parameterType="Map" resultMap="sellResultMap">
+		select 
+		o.id as o_id,o.money as o_money,o.productNum as o_productNum,o.payType as o_payType,o.status as o_status,o.operator as o_operator,o.remark as o_remark,o.createTime as o_createTime,
+		od.id as od_id,od.sellId as od_sellId,od.money as od_money,od.productName as od_productName,od.price as od_price,od.productNum as od_productNum  
+		from sell o,sell_detail od 
+		where o.id = od.sellId 
+		<if test="payType != null">
+			and o.payType = #{payType}  
+		</if>
+		<if test="status != null">
+			and o.status = #{status}  
+		</if>
+		<if test="operator != null">
+			and o.operator like '%${operator}%' 
+		</if>
+		<if test="minMoney != null">
+			and o.money &gt;= #{minMoney} 
+		</if>
+		<if test="maxMoney != null">
+			and o.money &lt;= #{maxMoney} 
+		</if>
+		<if test="offset != null and pageSize != null">
+			limit #{offset},#{pageSize}
+		</if>
+	</select>
+	<!-- 模糊搜索总条数 -->
+	<select id="getTotal" parameterType="Map" resultType="Integer">
+		select count(*) from sell where 1=1  
+		<if test="payType != null">
+			and payType = #{payType}  
+		</if>
+		<if test="status != null">
+			and status = #{status}  
+		</if>
+		<if test="operator != null">
+			and operator like '%${operator}%' 
+		</if>
+		<if test="minMoney != null">
+			and money &gt;= #{minMoney} 
+		</if>
+		<if test="maxMoney != null">
+			and money &lt;= #{maxMoney} 
+		</if>
+	</select>
+	<!-- 删除销售单信息 -->
+	<delete id="delete" parameterType="Long">
+		delete from sell where id = #{value}
+	</delete>
+	<!-- 销售统计 -->
+	<select id="getStats" parameterType="String" resultType="Map">
+		select sum(money) as money ,DATE_FORMAT(createTime,'${value}') as statsDate from sell GROUP BY DATE_FORMAT(createTime,'${value}')
+	</select>
+</mapper>
